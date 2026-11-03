@@ -3,15 +3,16 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(cowplot)
+library(ggrepel)
 
-aero <- c("Subfossil Vampirovibrionales", "Modern Vampirovibrionales", "Fossil Sericytochromatia", "Modern Sericytochromatia", 
-          "Modern Bacteriodetes", "Modern Chloroflexi", "Modern Thaumarcheota")
+aero <- c("Subfossil Vampirovibrionales", "Modern Vampirovibrionales", "Fossil Sericytochromatia_2", "Modern Sericytochromatia", 
+          "Modern Bacteriodetes", "Modern Chloroflexi", "Modern Thaumarchaeota")
 no_aero <- c("Fossil Cyanobacteriales", "Modern Cyanobacteriales", "Modern Limnotrichales", "Fossil Gloeomargaritales", "Modern Gloeomargaritales")
 
 quasar_normalized_data <- readr::read_csv("processed_data/spectral_quasar_normalized.csv") %>%
   dplyr::filter(sample != "string", sample != "meta") %>%
-  dplyr::mutate(sample = ifelse(sample == "Fossil Sericytochromatia...28", "Fossil Sericytochromatia (I)",
-                                ifelse(sample == "Fossil Sericytochromatia...30", "Fossil Sericytochromatia (II)", sample))) %>%
+  dplyr::mutate(sample = ifelse(sample == "Fossil Sericytochromatia...28", "Fossil Sericytochromatia_1",
+                                ifelse(sample == "Fossil Sericytochromatia...30", "Fossil Sericytochromatia_2", sample))) %>%
   dplyr::mutate(aerobic_resp = ifelse(sample %in% aero, "YES", 
                                       ifelse(sample %in% no_aero, "NO", "UNKNOWN"))) %>%
   dplyr::select(sample, aerobic_resp, everything())
@@ -106,7 +107,7 @@ spec_plt <- cowplot::plot_grid(
   align = "h")
 spec_plt
 
-ggsave("plots/spectra.png", width = 7.5, height = 3.5, dpi = 500)
+ggsave("plots/spectra.png", spec_plt, width = 7.5, height = 3.5, dpi = 500)
 
 
 
@@ -127,17 +128,38 @@ pca_df <- data.frame(
   PC4 = pca_result$x[, 4]) %>%
   dplyr::mutate(aerobic_resp = factor(aerobic_resp, levels = c("YES","NO","UNKNOWN")))
 
+set.seed(1)
+pca_df <- pca_df %>%
+  dplyr::mutate(PC1_j = jitter(PC1, amount = 0.5),
+                PC2_j = jitter(PC2, amount = 0.5))
+
 var_explained <- summary(pca_result)$importance[2, ] * 100
 
-ggplot(pca_df, aes(x = PC1, y = PC2, color = aerobic_resp)) +
-  geom_point(size = 5, alpha = 0.7, position = position_jitter(width = 0.5, height = 0.5)) +
+pca <- ggplot(pca_df, aes(x = PC1_j, y = PC2_j, color = aerobic_resp)) +
+  geom_point(size = 5, alpha = 0.7) +
+  geom_text_repel(data = dplyr::filter(pca_df, aerobic_resp == "UNKNOWN"), aes(label = sample), color = "black", size = 4, max.overlaps = Inf) +
   scale_color_manual(values = c("YES" = "blue", "NO" = "orange", "UNKNOWN" = "grey")) +
   theme(panel.background = element_blank(),
-        axis.text = element_text(size = 14, color = 'black'),
-        axis.title = element_text(size = 18, color = 'black'),
+        axis.text = element_text(size = 11, color = 'black'),
+        axis.title = element_text(size = 12, color = 'black'),
         panel.border = element_rect(color = 'black', fill = NA),
-        legend.text = element_text(size = 12, color ='black'),
-        legend.title = element_text(size = 13, color = 'black'),
+        legend.text = element_text(size = 10, color ='black'),
+        legend.title = element_text(size = 10, color = 'black'),
         legend.position = "inside",
-        legend.position.inside = c(0.9,0.92)) +
+        legend.position.inside = c(0.86,0.9)) +
   labs(x = paste0("PC1 (", round(var_explained[1], 1), "%)"), y = paste0("PC2 (", round(var_explained[2], 1), "%)"), color = "Aerobic respiration") 
+pca
+
+ggsave("plots/PCA.png", pca,  width = 7.5, height = 7.5, dpi = 500)
+
+# ====================================================================================================================================================================== #
+# Final classification
+# ====================================================================================================================================================================== #
+
+classification <- pca_df %>% dplyr::select(sample, aerobic_resp, PC2) %>%
+  dplyr::arrange(desc(PC2)) %>%
+  dplyr::mutate(inferred = ifelse(aerobic_resp == "UNKNOWN", "YES", "NO")) %>%
+  dplyr::mutate(aerobic_resp = ifelse(PC2 > 0, "aerobic", "anaerobic")) %>%
+  dplyr::select(-PC2)
+
+write.table(classification, "processed_data/aerobic_species_consensus.tsv", quote = F, row.names = F, col.names = T, sep = '\t')

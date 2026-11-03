@@ -1,0 +1,22 @@
+sample	aerobic_resp	inferred
+Fossil stem Cyanobacteria (I)	aerobic	YES
+Fossil Limnotrichales	aerobic	YES
+Fossil Sericytochromatia_1	aerobic	YES
+Fossil stem Gloeomargaritales	aerobic	YES
+Modern Vampirovibrionales	aerobic	NO
+Fossil Melainabacteria	aerobic	YES
+Subfossil Vampirovibrionales	aerobic	NO
+Modern Bacteriodetes	aerobic	NO
+Fossil Sericytochromatia_2	aerobic	NO
+Modern Sericytochromatia	aerobic	NO
+Modern Chloroflexi	aerobic	NO
+Fossil stem Deinococcus	aerobic	YES
+Fossil stem Thaumarcheota	aerobic	YES
+Modern Thaumarchaeota	aerobic	NO
+Modern Gloeomargaritales	anaerobic	NO
+Fossil Gloeomargaritales	anaerobic	NO
+Modern Limnotrichales	anaerobic	NO
+Modern Cyanobacteriales	anaerobic	NO
+Fossil Cyanobacteriales	anaerobic	NO
+Fossil stem Cyanobacteria (II)	anaerobic	YES
+Fossil Cyanobacteria (III)	anaerobic	YES
