@@ -72,6 +72,15 @@ legend("topleft", legend = c("Anaerobic", "Aerobic"),
 tip_cols <- ifelse(states[tree_eq$tip.label] == 1, "blue", "orange")
 tiplabels(pch = 22, bg = tip_cols, col = "black", cex = 1.5)
 
+pp     <- get("last_plot.phylo", envir = .PlotPhyloEnv)
+n_tip  <- Ntip(tree_eq)
+node_x <- sort(unique(pp$xx[(n_tip + 1):(n_tip + Nnode(tree_eq))]))
+
+x_line  <- mean(node_x[2:3])                 # midpoint between those two nodes
+y_range <- range(pp$yy[1:n_tip]) + c(-0.5, 0.5)
+
+segments(x_line, y_range[1], x_line, y_range[2], col = adjustcolor("blue", alpha.f = 0.5), lwd = 8)
+
 dev.off()
 
 
